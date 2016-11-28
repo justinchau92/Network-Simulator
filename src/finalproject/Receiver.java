@@ -21,6 +21,7 @@ package finalproject;
 --
 
 ---------------------------------------------------------------------------------------*/
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -31,13 +32,12 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Timer;
+
 
 /**
  *Receiver class
@@ -111,6 +111,11 @@ public class Receiver {
 					case (2):
 						this.seqNum = scanPacket.getSeqNum();
 					
+						date = new Date();
+						dateLog = dateFormat.format(date);
+					
+						System.out.println(dateLog + " Received " + scanPacket);
+						
 						//create an ack packet
 						Packet ackPacket = new Packet(3, this.seqNum, this.config.getWindowSize(), this.seqNum,  
 							 this.config.getSenderAddress().getHostAddress(),this.config.getReceiverAddress().getHostAddress(),
@@ -139,6 +144,12 @@ public class Receiver {
 					//end of transmission
 					case(4):
 						this.seqNum = scanPacket.getSeqNum();
+					
+						date = new Date();
+						dateLog = dateFormat.format(date);
+				
+						System.out.println(dateLog + " Received " + scanPacket);
+					
 						//creates an ack packet
 						ackPacket = new Packet(4, this.seqNum, this.config.getWindowSize(), this.seqNum,  
 								this.config.getSenderAddress().getHostAddress(),this.config.getReceiverAddress().getHostAddress(),
@@ -200,14 +211,18 @@ public class Receiver {
 			//if it is a SOT packet
 			if(SOT.getPacketType() == 1)
 			{
+				Date date = new Date();
+				String dateLog = dateFormat.format(date);
+			
+				System.out.println(dateLog + " Received SOT " + SOT);
 				packet = new Packet(1, this.seqNum, this.config.getWindowSize(), this.seqNum,  
 						 this.config.getSenderAddress().getHostAddress(),this.config.getReceiverAddress().getHostAddress(),
 							this.config.getReceiverPort(),this.config.getSenderPort());
 				
 				this.sendPacket(packet);
 				
-				Date date = new Date();
-				String dateLog = dateFormat.format(date);
+				date = new Date();
+				dateLog = dateFormat.format(date);
 				
 				System.out.println(dateLog + " Sent back SOT ACK " + packet);
 				writer.println(dateLog + " Sent back SOT ACK " + packet);

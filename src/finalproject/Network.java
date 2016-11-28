@@ -44,9 +44,7 @@ import java.util.Random;
 public class Network {
 
 		private NetworkConfiguration config; // configuration file with set config
-		
-		private DatagramSocket networkReceivePacket; //ACK to Host
-		private DatagramSocket networkSendSocket; // Data to Host
+
 		
 		byte[] data = new byte[1024]; //data
 		
@@ -71,10 +69,7 @@ public class Network {
 			String dateLog = dateFormat.format(date);
 		
 			System.out.println("Network is now running");
-			
-			int totalPackets = 0;
-			int totalPacketsDropped = 0;
-			int totalPacketsTransmitted = 0;
+		
 			
 			DatagramSocket socket = null;
 			
@@ -102,7 +97,6 @@ public class Network {
 					
 					Packet packet = (Packet) o.readObject(); // read the packet
 					
-					totalPackets ++;
 					
 					//if its a control packet SOT or EOT
 					if(packet.getPacketType() ==1 || packet.getPacketType() == 4)
@@ -121,8 +115,7 @@ public class Network {
 						
 						//send the data through
 						socket.send(datagramPacket);
-						
-						totalPacketsTransmitted ++;
+
 						date = new Date();
 						dateLog = dateFormat.format(date);
 						System.out.println(dateLog +" Sent : " +  packet);
@@ -138,8 +131,6 @@ public class Network {
 							dateLog = dateFormat.format(date);
 							
 							System.out.println(dateLog + " Dropped : " + packet);
-							
-							totalPacketsDropped++;
 							
 						}
 						else
@@ -161,7 +152,6 @@ public class Network {
 							
 							socket.send(datagramPacket); //sends
 							
-							totalPacketsTransmitted ++;
 							date = new Date();
 							dateLog = dateFormat.format(date);
 							System.out.println(dateLog + " Sent : " + packet);

@@ -44,25 +44,7 @@ public class SRConfiguration {
 	 * Default constructor for SRconfiguration
 	 */
 	public SRConfiguration()
-	{
-		
-		try{
-			this.networkAddress = InetAddress.getByName("127.0.0.1");
-			this.senderAddress = InetAddress.getByName("127.0.0.1");
-			this.receiverAddress = InetAddress.getByName("127.0.0.1");
-		}
-		catch(Exception e)
-		{
-			
-		}
-		this.receiverPort = 7004;
-		this.networkPort = 7008;
-		this.senderPort = 7005;
-		this.maxPacketsToSend = 14;
-		this.windowSize = 5;
-		this.maxTimeout = 2000;
-			
-	}
+	{}
 	
 	/**
 	 * SR Constructor

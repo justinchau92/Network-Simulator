@@ -44,24 +44,8 @@ public class NetworkConfiguration {
 	/**
 	 * DEFAULT CONSTRUCTOR
 	 */
-	public NetworkConfiguration(){
-		
-		try
-		{
-			this.setSender(InetAddress.getByName("127.0.0.1"));
-			this.setReceiver(InetAddress.getByName("127.0.0.1"));
-		}
-		catch(Exception e)
-		{
-			
-		}
-		
-		this.setSenderPort(7005);
-		this.setNetworkPort(7008);
-		this.setReceiverPort(7004);
-		this.setBitErrorRate(50);
-		this.setAverageDelayPerPacket(100);
-	}
+	public NetworkConfiguration()
+	{}
 
 	
 	/**
