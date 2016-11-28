@@ -58,11 +58,10 @@ public class SRConfiguration {
 		this.receiverPort = 7004;
 		this.networkPort = 7008;
 		this.senderPort = 7005;
-		this.maxPacketsToSend = 4;
-		this.windowSize = 100;
-		this.maxTimeout = 5000;
-		
-		
+		this.maxPacketsToSend = 14;
+		this.windowSize = 5;
+		this.maxTimeout = 2000;
+			
 	}
 	
 	/**

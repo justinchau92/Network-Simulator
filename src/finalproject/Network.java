@@ -24,12 +24,9 @@ package finalproject;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -38,7 +35,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
-import java.util.Scanner;
+
 
 /**
  * Network Class
@@ -50,8 +47,6 @@ public class Network {
 		
 		private DatagramSocket networkReceivePacket; //ACK to Host
 		private DatagramSocket networkSendSocket; // Data to Host
-		
-		PrintWriter writer;
 		
 		byte[] data = new byte[1024]; //data
 		
@@ -74,14 +69,7 @@ public class Network {
 		{
 			Date date = new Date();
 			String dateLog = dateFormat.format(date);
-			try {
-				writer = new PrintWriter(dateLog +"_Network_Log.txt", "UTF-8");
-			} catch (FileNotFoundException | UnsupportedEncodingException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}	
-			writer.write("Network is now running");
-
+		
 			System.out.println("Network is now running");
 			
 			int totalPackets = 0;
@@ -138,7 +126,7 @@ public class Network {
 						date = new Date();
 						dateLog = dateFormat.format(date);
 						System.out.println(dateLog +" Sent : " +  packet);
-						writer.write(dateLog +" Sent : " +  packet);
+						
 					}
 					//any other packet you can drop
 					else
@@ -150,7 +138,6 @@ public class Network {
 							dateLog = dateFormat.format(date);
 							
 							System.out.println(dateLog + " Dropped : " + packet);
-							writer.write(dateLog + " Dropped : " + packet);
 							
 							totalPacketsDropped++;
 							
@@ -178,8 +165,6 @@ public class Network {
 							date = new Date();
 							dateLog = dateFormat.format(date);
 							System.out.println(dateLog + " Sent : " + packet);
-							writer.write(dateLog + " Sent : " + packet );
-							
 						}
 					}
 					
@@ -188,8 +173,6 @@ public class Network {
 				}
 			}
 		}
-		
-
 		
 		/**
 		 * Randomly generates a number to see if its below the bit rate

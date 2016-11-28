@@ -55,10 +55,11 @@ public class NetworkConfiguration {
 		{
 			
 		}
+		
 		this.setSenderPort(7005);
 		this.setNetworkPort(7008);
 		this.setReceiverPort(7004);
-		this.setBitErrorRate(10);
+		this.setBitErrorRate(50);
 		this.setAverageDelayPerPacket(100);
 	}
 

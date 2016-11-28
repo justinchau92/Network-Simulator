@@ -36,17 +36,14 @@ import java.util.logging.Logger;
  * Sender Class 
  *
  */
-/**
- * @author Chau
- *
- */
+
 public class Sender {
 
 	private int seqNum;
 	private ArrayList<Packet> packetWindow;
 	private ArrayList<Packet> packetArray;
-	private Timer timer;
-	private boolean waitForAcks;
+	private ArrayList<Packet> ackList;
+
 	private DatagramSocket socket;
 	private DatagramPacket datagramPacket;
 	private SRConfiguration config;
@@ -56,7 +53,7 @@ public class Sender {
 	private Packet SOT;
 	private Packet packet;
 	
-	private int packetsSent;
+
 	PrintWriter writer;
 	DateFormat dateFormat = new SimpleDateFormat("dd.MM.yy-HH.mm.ss");
 	
@@ -79,11 +76,13 @@ public class Sender {
 	 */
 	public void run() throws IOException, ClassNotFoundException
 	{
+		ackList = new ArrayList<Packet>();
 		Date date = new Date();
 		String dateLog = dateFormat.format(date);
 		writer = new PrintWriter(dateLog +"_Sender_Log.txt", "UTF-8");	
 		System.out.println("Sender is running");
-		writer.write("Sender is running");
+		writer.println("Sender is running");
+	
 		try
 		{
 			//create socket connection to sender port
@@ -107,7 +106,8 @@ public class Sender {
 			
 			//print that the SOT has been sent
 			System.out.println(dateLog +" Start of Transmission Sent : " + SOT );
-			writer.write(dateLog +" Start of Transmission Sent : " + SOT );
+			writer.println(dateLog +" Start of Transmission Sent : " + SOT );
+			
 			//get SOT Response
 			try
 			{
@@ -117,7 +117,7 @@ public class Sender {
 				{
 					
 					System.out.println(dateLog  + " SOT ACK received : " + responsePacket);
-					writer.write(dateLog  + " SOT ACK received : " + responsePacket);
+					writer.println(dateLog  + " SOT ACK received : " + responsePacket);
 				}
 				
 				Thread.sleep(2000);
@@ -128,140 +128,127 @@ public class Sender {
 				
 			}
 			
-			packetsSent = 0;
-			
+
 			//generate an array of packets
 			createPackets();
+			socket.setSoTimeout(this.config.getMaxTimeout());
 			
-			//if packetarray is not empty and prepped
-			while(packetArray.size() > 0)
+			while(!packetArray.isEmpty())
 			{
-				//prepare the window size
-				this.prepareWindow();
-				int l = 0;
-				
-				//send out the packets
-				for(int i=0;i < packetWindow.size();i++)
+				if(packetWindow.isEmpty())
 				{
-					if(packetArray.get(i).getPacketType() == 4)
-					{
-						if(packetArray.size() == 1)
-						{
-							sendPacket(packetArray.get(i));
-							date = new Date();
-							dateLog = dateFormat.format(date);
-							
-							System.out.println(dateLog + " End of Transmission Packet Sent : " + packetArray.get(i));
-							writer.write(dateLog + " End of Transmission Packet Sent : " + packetArray.get(i));
-						}
-					}
-					else 
-					{
-						sendPacket(packetArray.get(l));
-						
-						date = new Date();
-						dateLog = dateFormat.format(date);
-						
-						System.out.println(dateLog + " Packet Sent : " + packetArray.get(l));
-						writer.write(dateLog + " Packet Sent : " + packetArray.get(l));
-						l++;
-					}
+					prepareWindow();
 				}
-				l=0;
+				
+				System.out.println();
+				System.out.println("Enter Send Mode");
+				
+				send();
+			}
+			
+			EOT = new Packet(4, this.seqNum, this.config.getWindowSize(), this.seqNum,  
+					 this.config.getReceiverAddress().getHostAddress(),this.config.getSenderAddress().getHostAddress(),
+					this.config.getSenderPort(),this.config.getReceiverPort());
+			
+			System.out.println();
+			System.out.println("Enter EOT Mode");
 
-				waitAndResend();
-
-			}	
+			
+			packetArray.add(EOT);
+			packetWindow.add(EOT);
+			while(!packetArray.isEmpty())
+			{
+				send();
+			}
+	
+			
+			System.out.println("END OF TRANSMISSION");
+			writer.println("END OF TRANSMISSION");
+			
+			writer.close();
 	}
 	
+	
 	/**
-	 * Waits for the timeout and Resends data if timeout 
-	 * @throws ClassNotFoundException
+	 * Sender mode
 	 * @throws IOException
+	 * @throws ClassNotFoundException
 	 */
-	public void waitAndResend() throws ClassNotFoundException, IOException
+	public void send() throws IOException, ClassNotFoundException
 	{
-		this.timer = new Timer();
-		this.timer.schedule(new TimerTask(){
-
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				
-				timer.cancel();
-				timer.purge();
-				
-				timer = null;
-				
-				//if window still has items
-				if(packetWindow.size() > 0)
-				{
-					for(int i = 0; i < packetWindow.size(); i++)
-					{
-						Packet packet = packetWindow.get(i);
-						
-						try {
-							//resend
-							sendPacket(packet);
-							
-							Date date = new Date();
-							String dateLog = dateFormat.format(date);
-							
-							System.out.println(dateLog +" Resending Packet : " + packet);
-							writer.write(dateLog +" Resending Packet : " + packet);
-							
-						} 
-						catch (IOException e) 
-						{
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					try {
-						waitAndResend();
-					} catch (ClassNotFoundException | IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-				
-			}
-			
-		}, this.config.getMaxTimeout());
+		Date date;
+		String dateLog;
 		
-		//socket.setSoTimeout(2000);
-		
-		//check for the ACKS
-		for(int i=0; i < this.config.getWindowSize(); i++)
+		//for every packet in the window send it
+		for(int i = 0; i < packetWindow.size();i++)
 		{
-
-			Packet packet = getPacket();
 			
-			Date date = new Date();
-			String dateLog = dateFormat.format(date);
-					
-			if(packet != null && packet.getPacketType() == 4)
+			date = new Date();
+			dateLog = dateFormat.format(date);
+			
+			//if the packet is an EOT 
+			if(packetWindow.get(i).getPacketType() == 4)
 			{
+				writer.println(dateLog + " EOT Sent " + packetWindow.get(i));
+				System.out.println(dateLog + " EOT Sent " + packetWindow.get(i));
 				
-				System.out.println(dateLog + " Packet EOT ACK Received " + packet);
-				writer.write(dateLog + " Packet EOT ACK Received " + packet);
-				System.out.println("Terminating");
-				System.exit(0);
+				sendPacket(packetWindow.get(i));
 			}
-			else if(packet != null)
+			else
 			{
-				System.out.println(dateLog + " Packet ACK Received " + packet);
-				writer.write(dateLog + " Packet ACK Received " + packet);
+				writer.println(dateLog + " Sent " + packetWindow.get(i));
+				System.out.println(dateLog + " Sent " + packetWindow.get(i));
 				
-				this.removePacketFromWindow(packet.getAckNum());
-				this.removeFromPacketArray(packet);
+				sendPacket(packetWindow.get(i));
 			}
+		}
+		
+		System.out.println();
+		System.out.println("Entering Receive mode");
+		
+		//goes into receive mode
+		receive();
+		
+		//removes received packet from window and array list
+		for(int i = 0; i < ackList.size();i++)
+		{
+			//removing from packetWindow
+			removePacketFromWindow(ackList.get(i).getAckNum());
 			
-			
-
+			//removing from packetArray
+			removeFromPacketArray(ackList.get(i));
 		}
 	}
 	
+	/**
+	 * Receives packets
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
+	private void receive() throws ClassNotFoundException, IOException{
+		Packet returnPacket;
+		Date date;
+		String dateLog;
+		
+		//goes through the window array to see if we received a packet then removes it from window and array list
+		for(int i = 0; i < packetWindow.size();i++)
+		{	
+			
+			returnPacket = getPacket();
+			
+			//makes sure that theres something
+			if(returnPacket != null)
+			{
+				ackList.add(returnPacket);
+				date = new Date();
+				dateLog = dateFormat.format(date);
+				writer.println(dateLog + " ACK Received " + returnPacket);
+				System.out.println(dateLog + " ACK Received " + returnPacket);
+			}
+			
+		}
+		
+	}
 	
 	/**
 	 * Removes packet from packetArray list
@@ -275,10 +262,10 @@ public class Sender {
 			{
 				packetArray.remove(i);
 			}
-		}
-		
+		}	
 		packetArray.remove(packet);
 	}
+	
 	
 	/**
 	 * Sends packet
@@ -303,6 +290,7 @@ public class Sender {
 			socket.send(datagramPacket);
 
 	}
+	
 
 	/**
 	 * Gets packet from socket
@@ -310,28 +298,36 @@ public class Sender {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	private Packet getPacket() throws IOException, ClassNotFoundException
+	private Packet getPacket() throws IOException 
 	{
-
+		int bytes = 0;
+		do{
 			data = new byte[1024];
 			datagramPacket = new DatagramPacket(data, data.length);
-			socket.receive(datagramPacket);
 			
+			try {
+				socket.receive(datagramPacket);
+			} catch (SocketTimeoutException e1) {
+				// TODO Auto-generated catch block
+				break;
+			}
 			data = datagramPacket.getData();
 			
+
 			ByteArrayInputStream baIn = new ByteArrayInputStream(data);
 			try{
 				ObjectInputStream oIn = new ObjectInputStream(baIn);
 				Packet temp = (Packet) oIn.readObject();
+				
 				return temp;
 			}
 			catch(Exception e)
-			{
-				
-			}
-			return null;
-
+			{}
+		} while(bytes == data.length );
+		
+		return null;
 	}
+	
 	
 	/**
 	 * Create the packets into an arraylist
@@ -349,13 +345,7 @@ public class Sender {
 			this.packetArray.add(packet);
 			this.seqNum ++ ;
 		}
-		
-		EOT = new Packet(4, this.seqNum, this.config.getWindowSize(), this.seqNum,  
-				 this.config.getReceiverAddress().getHostAddress(),this.config.getSenderAddress().getHostAddress(),
-				this.config.getSenderPort(),this.config.getReceiverPort());
-		
-		this.packetArray.add(EOT);
-		
+	
 	}
 	
 	/**
@@ -380,6 +370,7 @@ public class Sender {
 			}
 		}
 	}
+	
 	
 	/**
 	 * Removes the packet from the window

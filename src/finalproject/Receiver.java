@@ -80,7 +80,7 @@ public class Receiver {
 		Date date = new Date();
 		String dateLog = dateFormat.format(date);
 		writer = new PrintWriter(dateLog + "_Receiver_Log.txt", "UTF-8");
-		writer.write(dateLog + " Receiver started");
+		writer.println(dateLog + " Receiver started");
 		//connect socket
 		try
 		{
@@ -121,7 +121,7 @@ public class Receiver {
 						dateLog = dateFormat.format(date);
 						
 						System.out.println(dateLog + " Sent ACK : " + ackPacket); //print out log
-						writer.write(dateLog + " Sent ACK : " + ackPacket);
+						writer.println(dateLog + " Sent ACK : " + ackPacket);
 						
 						if(!ACKChecker(scanPacket.getSeqNum()))
 						{
@@ -149,14 +149,14 @@ public class Receiver {
 						dateLog = dateFormat.format(date);
 						
 						System.out.println(dateLog + " Sent EOT ACK : " + ackPacket);
-						writer.write(dateLog + " Sent EOT ACK : " + ackPacket);
+						writer.println(dateLog + " Sent EOT ACK : " + ackPacket);
 						
-						writer.write("Total Received Packets : " + totalPackets);
-						writer.write("Total Dup Acks : " + totalDupAcks);
+						writer.println("Total Received Packets : " + totalPackets);
+						writer.println("Total Dup Acks : " + totalDupAcks);
 						System.out.println("Total Received Packets : " + totalPackets);
 						System.out.println("Total Dup Acks : " + totalDupAcks);
 						
-						keepReceiving = true;
+						keepReceiving = false;
 						
 						break;
 						
@@ -167,6 +167,8 @@ public class Receiver {
 				
 			}
 		}
+		
+		writer.close();
 		
 	}
 	
@@ -208,7 +210,7 @@ public class Receiver {
 				String dateLog = dateFormat.format(date);
 				
 				System.out.println(dateLog + " Sent back SOT ACK " + packet);
-				writer.write(dateLog + " Sent back SOT ACK " + packet);
+				writer.println(dateLog + " Sent back SOT ACK " + packet);
 			}
 			else
 			{
@@ -216,9 +218,8 @@ public class Receiver {
 			}
 		}
 		catch(Exception e)
-		{
-			
-		}
+		{}
+		
 	}
 	
 	/**
